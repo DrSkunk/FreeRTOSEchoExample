@@ -346,20 +346,21 @@ static const xMACAddress_t xBroadcastMACAddress = { { 0xff, 0xff, 0xff, 0xff, 0x
 /* Part of the Ethernet and IP headers are always constant when sending an IPv4
 UDP packet.  This array defines the constant parts, allowing this part of the
 packet to be filled in using a simple memcpy() instead of individual writes. */
-uint8_t xDefaultPartUDPPacketHeader[] =
-{
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 	/* Ethernet source MAC address. */
-	0x08, 0x00, 							/* Ethernet frame type. */
-	ipIP_VERSION_AND_HEADER_LENGTH_BYTE, 	/* ucVersionHeaderLength. */
-	0x00, 									/* ucDifferentiatedServicesCode. */
-	0x00, 0x00, 							/* usLength. */
-	0x00, 0x00, 							/* usIdentification. */
-	0x00, 0x00, 							/* usFragmentOffset. */
-	updconfigIP_TIME_TO_LIVE, 				/* ucTimeToLive */
-	ipPROTOCOL_UDP, 						/* ucProtocol. */
-	0x00, 0x00, 							/* usHeaderChecksum. */
-	0x00, 0x00, 0x00, 0x00 					/* Source IP address. */
-};
+///uint8_t xDefaultPartUDPPacketHeader[] =
+///{
+///	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 	/* Ethernet source MAC address. */
+///	0x08, 0x00, 							/* Ethernet frame type. */
+///	ipIP_VERSION_AND_HEADER_LENGTH_BYTE, 	/* ucVersionHeaderLength. */
+///	0x00, 									/* ucDifferentiatedServicesCode. */
+///	0x00, 0x00, 							/* usLength. */
+///	0x00, 0x00, 							/* usIdentification. */
+///	0x00, 0x00, 							/* usFragmentOffset. */
+///	updconfigIP_TIME_TO_LIVE, 				/* ucTimeToLive */
+///	ipPROTOCOL_UDP, 						/* ucProtocol. */
+///	0x00, 0x00, 							/* usHeaderChecksum. */
+///	0x00, 0x00, 0x00, 0x00 					/* Source IP address. */
+///};
+uint8_t * xDefaultPartUDPPacketHeader;
 
 /* Part of the Ethernet and ARP headers are always constant when sending an IPv4
 ARP packet.  This array defines the constant parts, allowing this part of the
@@ -1879,6 +1880,33 @@ void extraSetup() {
 	xNetworkAddressing->ulNetMask = 0;
 	xNetworkAddressing->ulGatewayAddress = 0;
 	xNetworkAddressing->ulDNSServerAddress = 0;
+
+	xDefaultPartUDPPacketHeader = malloc(sizeof(uint8_t) * 24);
+	if (xDefaultPartUDPPacketHeader == 0) abort();
+	xDefaultPartUDPPacketHeader[0] = 0x00;
+	xDefaultPartUDPPacketHeader[1] = 0x00;
+	xDefaultPartUDPPacketHeader[2] = 0x00;
+	xDefaultPartUDPPacketHeader[3] = 0x00;
+	xDefaultPartUDPPacketHeader[4] = 0x00;
+	xDefaultPartUDPPacketHeader[5] = 0x00;
+	xDefaultPartUDPPacketHeader[6] = 0x00;
+	xDefaultPartUDPPacketHeader[7] = 0x08;
+	xDefaultPartUDPPacketHeader[8] = ipIP_VERSION_AND_HEADER_LENGTH_BYTE;
+	xDefaultPartUDPPacketHeader[9] = 0x00;
+	xDefaultPartUDPPacketHeader[10] = 0x00;
+	xDefaultPartUDPPacketHeader[11] = 0x00;
+	xDefaultPartUDPPacketHeader[12] = 0x00;
+	xDefaultPartUDPPacketHeader[13] = 0x00;
+	xDefaultPartUDPPacketHeader[14] = 0x00;
+	xDefaultPartUDPPacketHeader[15] = 0x00;
+	xDefaultPartUDPPacketHeader[16] = updconfigIP_TIME_TO_LIVE;
+	xDefaultPartUDPPacketHeader[17] = ipPROTOCOL_UDP;
+	xDefaultPartUDPPacketHeader[18] = 0x00;
+	xDefaultPartUDPPacketHeader[19] = 0x00;
+	xDefaultPartUDPPacketHeader[20] = 0x00;
+	xDefaultPartUDPPacketHeader[21] = 0x00;
+	xDefaultPartUDPPacketHeader[22] = 0x00;
+	xDefaultPartUDPPacketHeader[23] = 0x00;
 }
 ///
 
