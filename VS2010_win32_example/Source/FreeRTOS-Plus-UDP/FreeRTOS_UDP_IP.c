@@ -327,7 +327,8 @@ static void prvProcessNetworkDownEvent( void );
 xQueueHandle xNetworkEventQueue = NULL;
 
 /* The ARP cache. */
-static xARPCacheRow_t xARPCache[ ipconfigARP_CACHE_ENTRIES ];
+///static xARPCacheRow_t xARPCache[ ipconfigARP_CACHE_ENTRIES ];
+static xARPCacheRow_t * xARPCache;
 
 /* The timer that triggers ARP events. */
 static xTimerHandle xARPTimer = NULL;
@@ -379,7 +380,8 @@ static const uint8_t xDefaultPartARPPacketHeader[] =
 };
 
 /* Structure that stores the netmask, gateway address and DNS server addresses. */
-static xNetworkAddressingParameters_t xNetworkAddressing = { 0, 0, 0, 0 };
+///static xNetworkAddressingParameters_t xNetworkAddressing = { 0, 0, 0, 0 };
+static xNetworkAddressingParameters_t * xNetworkAddressing;
 
 /*-----------------------------------------------------------*/
 
@@ -1865,4 +1867,19 @@ xARPHeader_t *pxARPHeader;
 #endif /* ipconfigBYTE_ORDER == FREERTOS_LITTLE_ENDIAN */
 
 /*-----------------------------------------------------------*/
+	
+///
+void extraSetup() {
+	xARPCache = malloc(6 * sizeof(xARPCacheRow_t));
+	if (xARPCache == 0) abort();
+
+	xNetworkAddressing = malloc(sizeof(xNetworkAddressingParameters_t));
+	if (xNetworkAddressing == 0) abort();
+	xNetworkAddressing->ulDefaultIPAddress = 0;
+	xNetworkAddressing->ulNetMask = 0;
+	xNetworkAddressing->ulGatewayAddress = 0;
+	xNetworkAddressing->ulDNSServerAddress = 0;
+}
+///
+
 

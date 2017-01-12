@@ -108,6 +108,8 @@ uint8_t * FreeRTOS_GetMACAddress( void );
 	BaseType_t xStartNabtoTask( void );
 #endif
 
+void extraSetup( void);
+
 #endif /* FREERTOS_IP_H */
 
 

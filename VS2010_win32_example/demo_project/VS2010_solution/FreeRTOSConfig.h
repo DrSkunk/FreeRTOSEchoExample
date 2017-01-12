@@ -183,7 +183,7 @@ example, on my development laptop setting configNETWORK_INTERFACE_TO_USE to 1
 results in the wired network being used, while setting
 configNETWORK_INTERFACE_TO_USE to 2 results in the wireless network being
 used. */
-#define configNETWORK_INTERFACE_TO_USE 7L
+#define configNETWORK_INTERFACE_TO_USE 3L
 
 /* Only when using BufferAllocation_1.c. */
 #define configUSE_STATIC_BUFFERS 1
@@ -199,7 +199,7 @@ http://www.FreeRTOS.org/FreeRTOS-Plus/FreeRTOS_Plus_UDP/Embedded_Ethernet_Exampl
 #define configECHO_SERVER_ADDR0	192
 #define configECHO_SERVER_ADDR1 168
 #define configECHO_SERVER_ADDR2 0
-#define configECHO_SERVER_ADDR3 107
+#define configECHO_SERVER_ADDR3 205
 
 /* Default MAC address configuration.  The demo creates a virtual network
 connection that uses this MAC address by accessing the raw Ethernet/WiFi data

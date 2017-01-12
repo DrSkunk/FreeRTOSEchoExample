@@ -148,11 +148,6 @@ static xSemaphoreHandle xConsoleMutex = NULL;
  * http://www.FreeRTOS.org/FreeRTOS-Plus/FreeRTOS_Plus_UDP/Embedded_Ethernet_Examples/RTOS_UDP_CLI_Windows_Simulator.shtml
  *
  ******************************************************************************/
-/// initialise now global pointers
-void extraSetup( void )
-{
-}
-///
 
 int main( void )
 {
