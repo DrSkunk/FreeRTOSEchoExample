@@ -195,7 +195,7 @@ uint32_t xAddressLength = sizeof( xEchoServerAddress );
 			
 			/* Create the string that is sent to the echo server. */
 			sprintf( cTxString, "Message number %u\r\n", ( unsigned int ) ulTxCount );
-			//printf("Sending echo: %s\n", cTxString);
+			printf("Sending echo: %s\n", cTxString);
 
 			/* Send the string to the socket.  ulFlags is set to 0, so the zero
 			copy interface is not used.  That means the data from cTxString is

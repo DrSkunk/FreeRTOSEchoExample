@@ -1,0 +1,2 @@
+More information on how to setup this example and make it run is available here: http://www.freertos.org/FreeRTOS-Plus/FreeRTOS_Plus_UDP/Embedded_Ethernet_Examples/RTOS_UDP_CLI_Windows_Simulator.shtml
+Visual Studio 2010 is required.

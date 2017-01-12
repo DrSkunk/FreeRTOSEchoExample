@@ -327,8 +327,9 @@ static void prvProcessNetworkDownEvent( void );
 xQueueHandle xNetworkEventQueue = NULL;
 
 /* The ARP cache. */
-///static xARPCacheRow_t xARPCache[ ipconfigARP_CACHE_ENTRIES ];
+//static xARPCacheRow_t xARPCache[ ipconfigARP_CACHE_ENTRIES ];
 static xARPCacheRow_t * xARPCache;
+
 
 /* The timer that triggers ARP events. */
 static xTimerHandle xARPTimer = NULL;
@@ -346,21 +347,22 @@ static const xMACAddress_t xBroadcastMACAddress = { { 0xff, 0xff, 0xff, 0xff, 0x
 /* Part of the Ethernet and IP headers are always constant when sending an IPv4
 UDP packet.  This array defines the constant parts, allowing this part of the
 packet to be filled in using a simple memcpy() instead of individual writes. */
-///uint8_t xDefaultPartUDPPacketHeader[] =
-///{
-///	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 	/* Ethernet source MAC address. */
-///	0x08, 0x00, 							/* Ethernet frame type. */
-///	ipIP_VERSION_AND_HEADER_LENGTH_BYTE, 	/* ucVersionHeaderLength. */
-///	0x00, 									/* ucDifferentiatedServicesCode. */
-///	0x00, 0x00, 							/* usLength. */
-///	0x00, 0x00, 							/* usIdentification. */
-///	0x00, 0x00, 							/* usFragmentOffset. */
-///	updconfigIP_TIME_TO_LIVE, 				/* ucTimeToLive */
-///	ipPROTOCOL_UDP, 						/* ucProtocol. */
-///	0x00, 0x00, 							/* usHeaderChecksum. */
-///	0x00, 0x00, 0x00, 0x00 					/* Source IP address. */
-///};
-uint8_t * xDefaultPartUDPPacketHeader;
+uint8_t xDefaultPartUDPPacketHeader[] =
+{
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 	/* Ethernet source MAC address. */
+	0x08, 0x00, 							/* Ethernet frame type. */
+	ipIP_VERSION_AND_HEADER_LENGTH_BYTE, 	/* ucVersionHeaderLength. */
+	0x00, 									/* ucDifferentiatedServicesCode. */
+	0x00, 0x00, 							/* usLength. */
+	0x00, 0x00, 							/* usIdentification. */
+	0x00, 0x00, 							/* usFragmentOffset. */
+	updconfigIP_TIME_TO_LIVE, 				/* ucTimeToLive */
+	ipPROTOCOL_UDP, 						/* ucProtocol. */
+	0x00, 0x00, 							/* usHeaderChecksum. */
+	0x00, 0x00, 0x00, 0x00 					/* Source IP address. */
+};
+uint8_t * xDefaultPartUDPPacketHeaderPointer;
+
 
 /* Part of the Ethernet and ARP headers are always constant when sending an IPv4
 ARP packet.  This array defines the constant parts, allowing this part of the
@@ -383,7 +385,6 @@ static const uint8_t xDefaultPartARPPacketHeader[] =
 /* Structure that stores the netmask, gateway address and DNS server addresses. */
 ///static xNetworkAddressingParameters_t xNetworkAddressing = { 0, 0, 0, 0 };
 static xNetworkAddressingParameters_t * xNetworkAddressing;
-
 /*-----------------------------------------------------------*/
 
 static void prvIPTask( void *pvParameters )
@@ -572,10 +573,15 @@ static BaseType_t xReturn = pdFALSE;
 			if( xReturn == pdFALSE )
 			{
 				/* Store the local IP and MAC address. */
-				xNetworkAddressing.ulDefaultIPAddress = FreeRTOS_inet_addr_quick( ucIPAddress[ 0 ], ucIPAddress[ 1 ], ucIPAddress[ 2 ], ucIPAddress[ 3 ] );
-				xNetworkAddressing.ulNetMask = FreeRTOS_inet_addr_quick( ucNetMask[ 0 ], ucNetMask[ 1 ], ucNetMask[ 2 ], ucNetMask[ 3 ] );
-				xNetworkAddressing.ulGatewayAddress = FreeRTOS_inet_addr_quick( ucGatewayAddress[ 0 ], ucGatewayAddress[ 1 ], ucGatewayAddress[ 2 ], ucGatewayAddress[ 3 ] );
-				xNetworkAddressing.ulDNSServerAddress = FreeRTOS_inet_addr_quick( ucDNSServerAddress[ 0 ], ucDNSServerAddress[ 1 ], ucDNSServerAddress[ 2 ], ucDNSServerAddress[ 3 ] );
+				///xNetworkAddressing->ulDefaultIPAddress = FreeRTOS_inet_addr_quick( ucIPAddress[ 0 ], ucIPAddress[ 1 ], ucIPAddress[ 2 ], ucIPAddress[ 3 ] );
+				///xNetworkAddressing->ulNetMask = FreeRTOS_inet_addr_quick( ucNetMask[ 0 ], ucNetMask[ 1 ], ucNetMask[ 2 ], ucNetMask[ 3 ] );
+				///xNetworkAddressing->ulGatewayAddress = FreeRTOS_inet_addr_quick( ucGatewayAddress[ 0 ], ucGatewayAddress[ 1 ], ucGatewayAddress[ 2 ], ucGatewayAddress[ 3 ] );
+				///xNetworkAddressing->ulDNSServerAddress = FreeRTOS_inet_addr_quick( ucDNSServerAddress[ 0 ], ucDNSServerAddress[ 1 ], ucDNSServerAddress[ 2 ], ucDNSServerAddress[ 3 ] );
+
+				xNetworkAddressing->ulDefaultIPAddress = FreeRTOS_inet_addr_quick( ucIPAddress[ 0 ], ucIPAddress[ 1 ], ucIPAddress[ 2 ], ucIPAddress[ 3 ] );
+				xNetworkAddressing->ulNetMask = FreeRTOS_inet_addr_quick( ucNetMask[ 0 ], ucNetMask[ 1 ], ucNetMask[ 2 ], ucNetMask[ 3 ] );
+				xNetworkAddressing->ulGatewayAddress = FreeRTOS_inet_addr_quick( ucGatewayAddress[ 0 ], ucGatewayAddress[ 1 ], ucGatewayAddress[ 2 ], ucGatewayAddress[ 3 ] );
+				xNetworkAddressing->ulDNSServerAddress = FreeRTOS_inet_addr_quick( ucDNSServerAddress[ 0 ], ucDNSServerAddress[ 1 ], ucDNSServerAddress[ 2 ], ucDNSServerAddress[ 3 ] );
 
 				#if ipconfigUSE_DHCP == 1
 				{
@@ -584,11 +590,12 @@ static BaseType_t xReturn = pdFALSE;
 				}
 				#else
 				{
-					*ipLOCAL_IP_ADDRESS_POINTER = xNetworkAddressing.ulDefaultIPAddress;
+					///*ipLOCAL_IP_ADDRESS_POINTER = xNetworkAddressing->ulDefaultIPAddress;
+					*ipLOCAL_IP_ADDRESS_POINTER = xNetworkAddressing->ulDefaultIPAddress;
 
 					/* Ensure the gateway is on the same subnet as the IP
 					address. */
-					configASSERT( ( ( *ipLOCAL_IP_ADDRESS_POINTER ) & xNetworkAddressing.ulNetMask ) == ( xNetworkAddressing.ulGatewayAddress & xNetworkAddressing.ulNetMask ) );
+					///configASSERT( ( ( *ipLOCAL_IP_ADDRESS_POINTER ) & xNetworkAddressing->ulNetMask ) == ( xNetworkAddressing->ulGatewayAddress & xNetworkAddressing->ulNetMask ) );
 				}
 				#endif /* ipconfigUSE_DHCP == 1 */
 
@@ -618,17 +625,17 @@ void FreeRTOS_GetAddressConfiguration( uint32_t *pulIPAddress, uint32_t *pulNetM
 
 	if( pulNetMask != NULL )
 	{
-		*pulNetMask = xNetworkAddressing.ulNetMask;
+		*pulNetMask = xNetworkAddressing->ulNetMask;
 	}
 
 	if( pulGatewayAddress != NULL )
 	{
-		*pulGatewayAddress = xNetworkAddressing.ulGatewayAddress;
+		*pulGatewayAddress = xNetworkAddressing->ulGatewayAddress;
 	}
 
 	if( pulDNSServerAddress != NULL )
 	{
-		*pulDNSServerAddress = xNetworkAddressing.ulDNSServerAddress;
+		*pulDNSServerAddress = xNetworkAddressing->ulDNSServerAddress;
 	}
 }
 /*-----------------------------------------------------------*/
@@ -748,7 +755,6 @@ xNetworkBufferDescriptor_t *pxNetworkBuffer;
 	}
 }
 /*-----------------------------------------------------------*/
-
 static void prvAgeARPCache( void ) //(*EX\label{code:prvAgeARPCache}EX*)
 /*@
 requires pointer(&xARPCache, ?valARPC)&*&
@@ -817,10 +823,8 @@ ensures pointer(&xARPCache, valARPC)&*&
 			//@ open_struct(&(xARPCache + x)->xMACAddress);
 			/* If the entry has a MAC address of 0, then it is waiting an ARP
 			reply, and the ARP request should be retransmitted. */
-			//if( memcmp( ( void * ) &xNullMACAddress, ( void * ) &( xARPCache[ x ].xMACAddress ),
-			//	sizeof( xMACAddress_t ) ) == 0 )
- 			if( memcmp( ( void * ) &xNullMACAddress, ( void * ) &( (xARPCache + x)->xMACAddress ),
- 				sizeof( xMACAddress_t ) ) == 0 )
+			//if( memcmp( ( void * ) &xNullMACAddress, ( void * ) &( xARPCache[ x ].xMACAddress ), sizeof( xMACAddress_t ) ) == 0 )
+ 			if( memcmp( ( void * ) &xNullMACAddress, ( void * ) &( (xARPCache + x)->xMACAddress ), sizeof( xMACAddress_t ) ) == 0 )
  			{
 				//prvOutputARPRequest( xARPCache[ x ].ulIPAddress );
  				prvOutputARPRequest( (xARPCache + x)->ulIPAddress );
@@ -863,23 +867,16 @@ ensures pointer(&xARPCache, valARPC)&*&
  }
 /*-----------------------------------------------------------*/
 
-//static eARPLookupResult_t prvGetARPCacheEntry( uint32_t *pulIPAddress, 
-//	xMACAddress_t * const pxMACAddress )
- static eARPLookupResult_t prvGetARPCacheEntry( uint32_t *pulIPAddress, 
- 	xMACAddress_t * pxMACAddress ) //(*EX\label{code:prvGet}EX*)
+//static eARPLookupResult_t prvGetARPCacheEntry( uint32_t *pulIPAddress, xMACAddress_t * const pxMACAddress )
+ static eARPLookupResult_t prvGetARPCacheEntry( uint32_t *pulIPAddress, xMACAddress_t * pxMACAddress )
 /*@
 requires pointer(&xARPCache, ?valARPC)&*&
 	chars(valARPC, sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
- 	chars(valARPC + sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
- 	chars(valARPC + 2*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 3*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 4*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 5*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
+ 	chars(valARPC + 2*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + 3*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + 4*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + 5*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
  	
  	chars((&xNullMACAddress)->ucBytes, 6, _)&*&
  	struct_xMAC_ADDRESS_padding(&xNullMACAddress)&*&
@@ -900,16 +897,11 @@ requires pointer(&xARPCache, ?valARPC)&*&
 /*@
 ensures pointer(&xARPCache, valARPC)&*&
 	chars(valARPC, sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
- 	chars(valARPC + sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
- 	chars(valARPC + 2*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 3*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 4*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 5*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
+ 	chars(valARPC + 2*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + 3*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + 4*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + 5*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
  	
  	chars((&xNullMACAddress)->ucBytes, 6, _)&*&
  	struct_xMAC_ADDRESS_padding(&xNullMACAddress)&*&
@@ -952,10 +944,8 @@ ensures pointer(&xARPCache, valARPC)&*&
  		else
  		{
 
-				//if( ( *pulIPAddress & xNetworkAddressing.ulNetMask ) != 
- 				//	( ( *ipLOCAL_IP_ADDRESS_POINTER ) & xNetworkAddressing.ulNetMask ) )
-			if( ( *pulIPAddress & xNetworkAddressing->ulNetMask ) != 
-					( (uint32_t)xDefaultPartUDPPacketHeader[20] & xNetworkAddressing->ulNetMask ) )
+				//if( ( *pulIPAddress & xNetworkAddressing.ulNetMask ) != ( ( *ipLOCAL_IP_ADDRESS_POINTER ) & xNetworkAddressing.ulNetMask ) )
+			if( ( *pulIPAddress & xNetworkAddressing->ulNetMask ) != ( (uint32_t)xDefaultPartUDPPacketHeader[20] & xNetworkAddressing->ulNetMask ) )
  			{
 				// The IP address is off the local network, so look up the hardware address of the router, if any.
 				//ulAddressToLookup = xNetworkAddressing.ulGatewayAddress;
@@ -981,16 +971,11 @@ ensures pointer(&xARPCache, valARPC)&*&
  				for( x = 0; x < ipconfigARP_CACHE_ENTRIES; x++ )
 				/*@ invariant pointer(&xARPCache, valARPC)&*&
 				chars(valARPC, sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
-			 	chars(valARPC + sizeof(struct xARP_CACHE_TABLE_ROW), 
-			 		sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
-			 	chars(valARPC + 2*sizeof(struct xARP_CACHE_TABLE_ROW), 
-			 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
-			 	chars(valARPC + 3*sizeof(struct xARP_CACHE_TABLE_ROW), 
-			 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
-			 	chars(valARPC + 4*sizeof(struct xARP_CACHE_TABLE_ROW), 
-			 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
-			 	chars(valARPC + 5*sizeof(struct xARP_CACHE_TABLE_ROW), 
-			 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+			 	chars(valARPC + sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
+			 	chars(valARPC + 2*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+			 	chars(valARPC + 3*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+			 	chars(valARPC + 4*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+			 	chars(valARPC + 5*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
 			 	
 			 	chars((&xNullMACAddress)->ucBytes, 6, _)&*&
  				struct_xMAC_ADDRESS_padding(&xNullMACAddress)&*&
@@ -1028,10 +1013,8 @@ ensures pointer(&xARPCache, valARPC)&*&
 					//@ open_struct(&((xARPCache + 4)->xMACAddress));
 					//@ open_struct(&((xARPCache + 5)->xMACAddress));
 						// The IP address matched.  Is there a valid MAC address?
-						//if( memcmp( ( void * ) &xNullMACAddress, 
-						//	( void * ) &( xARPCache[ x ].xMACAddress ), sizeof( xMACAddress_t ) ) == 0 )
- 						if( memcmp( ( void * ) &xNullMACAddress, 
- 							( void * ) &( (xARPCache + x)->xMACAddress ), sizeof( xMACAddress_t ) ) == 0 )
+						//if( memcmp( ( void * ) &xNullMACAddress, ( void * ) &( xARPCache[ x ].xMACAddress ), sizeof( xMACAddress_t ) ) == 0 )
+ 						if( memcmp( ( void * ) &xNullMACAddress, ( void * ) &( (xARPCache + x)->xMACAddress ), sizeof( xMACAddress_t ) ) == 0 )
  						{
 							// This entry is waiting an ARP reply, so is not valid.
  							eReturn = eCantSendPacket;
@@ -1084,156 +1067,40 @@ ensures pointer(&xARPCache, valARPC)&*&
  		return eReturn;
  	}
 /*-----------------------------------------------------------*/
-//static void prvRefreshARPCacheEntry( const xMACAddress_t * const pxMACAddress, 
-//	const uint32_t ulIPAddress )
-static void prvRefreshARPCacheEntry( const xMACAddress_t*  pxMACAddress, 
-	const uint32_t ulIPAddress )  //(*EX\label{code:prvRefreshArp}EX*)
-/*@
-requires pointer(&xNetworkAddressing, ?valNA) &*&
-	 pointer(&xARPCache, ?valARPC) &*&
- 	 pointer(&xDefaultPartUDPPacketHeader, ?valUDPP) &*&
- 	 xNetworkAddressingParameters_ulNetMask(valNA,_) &*&
- 	 malloc_block_uchars(valUDPP,24) &*&
- 	 uchars(valUDPP, 24, _) &*&
- 	 chars(valARPC, sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
- 	 chars(valARPC + sizeof(struct xARP_CACHE_TABLE_ROW), 
- 	 	sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
- 	 chars(valARPC + 2*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 	 	sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	 chars(valARPC + 3*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 	 	sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	 chars(valARPC + 4*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 	 	sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	 chars(valARPC + 5*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 	 	sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	 chars(pxMACAddress->ucBytes, 6, _)&*&
- 	 struct_xMAC_ADDRESS_padding(pxMACAddress);
-@*/
-/*@
-ensures	pointer(&xNetworkAddressing, valNA) &*&
-	pointer(&xARPCache, valARPC) &*&
-	pointer(&xDefaultPartUDPPacketHeader, valUDPP) &*&
- 	xNetworkAddressingParameters_ulNetMask(valNA,_) &*&
- 	malloc_block_uchars(valUDPP,24) &*&
- 	uchars(valUDPP, 24, _) &*&
- 	chars(valARPC, sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
- 	chars(valARPC + sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
- 	chars(valARPC + 2*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 3*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 4*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 5*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars((pxMACAddress)->ucBytes, 6, _)&*&
- 	struct_xMAC_ADDRESS_padding(pxMACAddress);
-@*/
+
+static void prvRefreshARPCacheEntry( const xMACAddress_t * const pxMACAddress, const uint32_t ulIPAddress )
 {
-// assume(false);
-	//BaseType_t x, xEntryFound = pdFALSE, xOldestEntry = 0;
-	BaseType_t x;
-	BaseType_t xEntryFound = 0;
-	BaseType_t xOldestEntry = 0;
-	//uint8_t ucMinAgeFound = 0u;
-	//uint8_t ucMinAgeFound = (uint8_t) 0;
-	uint8_t ucMinAgeFound = 0;
+BaseType_t x, xEntryFound = pdFALSE, xOldestEntry = 0;
+uint8_t ucMinAgeFound = 0U;
 
 	/* Only process the IP address if it is on the local network. */
-	///Was defined at top
-	/// #define ipLOCAL_IP_ADDRESS_POINTER (( uint32_t* ) &( xDefaultPartUDPPacketHeader[ 20 ] ))
-	//if ((ulIPAddress & xNetworkAddressing.ulNetMask) == 
-	//	((*ipLOCAL_IP_ADDRESS_POINTER) & xNetworkAddressing.ulNetMask))
-	/// can be rewritten as
-	// TODO: fix potential arithmetic underflow
-	uint32_t ip = (uint32_t)xDefaultPartUDPPacketHeader[20]; 
-	//if ( (ulIPAddress & xNetworkAddressing->ulNetMask) == 
-	//	((uint32_t)xDefaultPartUDPPacketHeader[20] & xNetworkAddressing->ulNetMask))
-	if ( (ulIPAddress & xNetworkAddressing->ulNetMask) == (ip & xNetworkAddressing->ulNetMask))
+	//if( ( ulIPAddress & xNetworkAddressing->ulNetMask ) == ( ( *ipLOCAL_IP_ADDRESS_POINTER ) & xNetworkAddressing->ulNetMask ) )
+	uint32_t ip = *( ( uint32_t* ) &( xDefaultPartUDPPacketHeader[ 20 ] ) );
+	if( ( ulIPAddress & xNetworkAddressing->ulNetMask ) == ( ( ip ) & xNetworkAddressing->ulNetMask ) )
 	{
-		//ucMinAgeFound--;
-		ucMinAgeFound = (uint8_t)((int)(ucMinAgeFound) - 1);
-		
+		/* Start with the maximum possible number. */
+		ucMinAgeFound--;
+
+		/* For each entry in the ARP cache table. */
 		for (x = 0; x < ipconfigARP_CACHE_ENTRIES; x++)
-		/*@
-		invariant pointer(&xARPCache, valARPC) &*&
-		chars(valARPC, sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
-		chars(valARPC + sizeof(struct xARP_CACHE_TABLE_ROW), 
-			sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
-		chars(valARPC + 2*sizeof(struct xARP_CACHE_TABLE_ROW), 
-			sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
-		chars(valARPC + 3*sizeof(struct xARP_CACHE_TABLE_ROW), 
-			sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
-		chars(valARPC + 4*sizeof(struct xARP_CACHE_TABLE_ROW), 
-			sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
-		chars(valARPC + 5*sizeof(struct xARP_CACHE_TABLE_ROW), 
-			sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
-		 
-		chars((pxMACAddress)->ucBytes, 6, _)&*&
-		struct_xMAC_ADDRESS_padding(pxMACAddress)&*&
-		
-		x >= 0 &*&
-		x <= ipconfigARP_CACHE_ENTRIES &*&
-		xOldestEntry >= 0 &*&
-		xOldestEntry < ipconfigARP_CACHE_ENTRIES;
-		@*/
 		{
-		//@ close_struct(xARPCache);
-		//@ close_struct(xARPCache + 1);
-		//@ close_struct(xARPCache + 2);
-		//@ close_struct(xARPCache + 3);
-		//@ close_struct(xARPCache + 4);
-		//@ close_struct(xARPCache + 5);	
-		// Create all possible solution trees in advance
-		//@ if (x == 0) { }
-		//@ if (x == 1) { }
-		//@ if (x == 2) { }
-		//@ if (x == 3) { }
-		//@ if (x == 4) { }
-		//@ if (x == 5) { }
 			//if (xARPCache[x].ulIPAddress == ulIPAddress)
 			if ((xARPCache + x)->ulIPAddress  == ulIPAddress)
 			{
 				
-				// TODO: re-enable, only used in debugging 
+				// TODO: re-enable, only used in debugging (Type mismatch. Actual: struct xMAC_ADDRESS *. Expected: int *)
 				// "Type mismatch. Actual: struct xMAC_ADDRESS *. Expected: int8 *."
 				//if( memcmp( ( &( xARPCache[ x ].xMACAddress)), &xNullMACAddress, sizeof( xMACAddress_t ) ) == 0 )
 				//{
-				//	//iptraceARP_TABLE_ENTRY_CREATED( xARPCache[ x ].ulIPAddress, 
-				//		*pxMACAddress );
+				//	//iptraceARP_TABLE_ENTRY_CREATED( xARPCache[ x ].ulIPAddress, *pxMACAddress );
 				//}
 				//xARPCache[x].ucAge = ipconfigMAX_ARP_AGE;
 				(xARPCache+x)->ucAge = ipconfigMAX_ARP_AGE;
 				
-				//@ open_struct(&(xARPCache->xMACAddress));
-				//@ open_struct(&((xARPCache + 1)->xMACAddress));
-				//@ open_struct(&((xARPCache + 2)->xMACAddress));
-				//@ open_struct(&((xARPCache + 3)->xMACAddress));
-				//@ open_struct(&((xARPCache + 4)->xMACAddress));
-				//@ open_struct(&((xARPCache + 5)->xMACAddress));
-				
-				//@ open_struct(pxMACAddress);
 				//memcpy( &( xARPCache[ x ].xMACAddress ), pxMACAddress, sizeof( xMACAddress_t ) );
 				memcpy( &( (xARPCache + x)->xMACAddress ), pxMACAddress, sizeof( xMACAddress_t ) );
 				xEntryFound = pdTRUE;
-				//printf(" -- Entry found \n");
-				
-				//@ close_struct(pxMACAddress);
-				
-				//@ close_struct(&(xARPCache->xMACAddress));
-				//@ close_struct(&((xARPCache + 1)->xMACAddress));
-				//@ close_struct(&((xARPCache + 2)->xMACAddress));
-				//@ close_struct(&((xARPCache + 3)->xMACAddress));
-				//@ close_struct(&((xARPCache + 4)->xMACAddress));
-				//@ close_struct(&((xARPCache + 5)->xMACAddress));
-				
-				//@ open_struct(xARPCache);
-				//@ open_struct(xARPCache + 1);
-				//@ open_struct(xARPCache + 2);
-				//@ open_struct(xARPCache + 3);
-				//@ open_struct(xARPCache + 4);
-				//@ open_struct(xARPCache + 5);
+
 				break;
 			}
 			else
@@ -1243,57 +1110,19 @@ ensures	pointer(&xNetworkAddressing, valNA) &*&
 				{
 					//ucMinAgeFound = xARPCache[x].ucAge;
 					ucMinAgeFound = (xARPCache + x)->ucAge;
-					//@ assert(x >= 0 && x < ipconfigARP_CACHE_ENTRIES);
 					xOldestEntry = x;
-					//@ assert(xOldestEntry < ipconfigARP_CACHE_ENTRIES);
 				}
-				//@ open_struct(xARPCache);
-				//@ open_struct(xARPCache + 1);
-				//@ open_struct(xARPCache + 2);
-				//@ open_struct(xARPCache + 3);
-				//@ open_struct(xARPCache + 4);
-				//@ open_struct(xARPCache + 5);
 			}
 
 		}
-		
 
 		if( xEntryFound == pdFALSE )
 		{
-			//@ close_struct(xARPCache);
-			//@ close_struct(xARPCache + 1);
-			//@ close_struct(xARPCache + 2);
-			//@ close_struct(xARPCache + 3);
-			//@ close_struct(xARPCache + 4);
-			//@ close_struct(xARPCache + 5);
-			
-			//@ if (xOldestEntry == 0) { }
-			//@ if (xOldestEntry == 1) { }
-			//@ if (xOldestEntry == 2) { }
-			//@ if (xOldestEntry == 3) { }
-			//@ if (xOldestEntry == 4) { }
-			//@ if (xOldestEntry == 5) { }
-			//printf(" -- Entry not found \n");
 			//xARPCache[ xOldestEntry ].ulIPAddress = ulIPAddress;
 			(xARPCache + xOldestEntry )->ulIPAddress = ulIPAddress;
-			//@ open_struct(&(xARPCache)->xMACAddress);
-			//@ open_struct(&(xARPCache + 1)->xMACAddress);
-			//@ open_struct(&(xARPCache + 2)->xMACAddress);
-			//@ open_struct(&(xARPCache + 3)->xMACAddress);
-			//@ open_struct(&(xARPCache + 4)->xMACAddress);
-			//@ open_struct(&(xARPCache + 5)->xMACAddress);
-			//@ open_struct(pxMACAddress);
-			//memcpy( &( xARPCache[ xOldestEntry ].xMACAddress ), 
-			//	pxMACAddress, sizeof( xMACAddress_t ) );
-			memcpy( &((xARPCache + xOldestEntry)->xMACAddress ), 
-				pxMACAddress, sizeof( xMACAddress_t ) );
-			//@ close_struct(pxMACAddress);
-			//@ close_struct(&(xARPCache)->xMACAddress);
-			//@ close_struct(&(xARPCache + 1)->xMACAddress);
-			//@ close_struct(&(xARPCache + 2)->xMACAddress);
-			//@ close_struct(&(xARPCache + 3)->xMACAddress);
-			//@ close_struct(&(xARPCache + 4)->xMACAddress);
-			//@ close_struct(&(xARPCache + 5)->xMACAddress);
+
+			//memcpy( &( xARPCache[ xOldestEntry ].xMACAddress ), pxMACAddress, sizeof( xMACAddress_t ) );
+			memcpy( &((xARPCache + xOldestEntry)->xMACAddress ), pxMACAddress, sizeof( xMACAddress_t ) );
 
 			if( pxMACAddress == &xNullMACAddress )
 			{
@@ -1303,21 +1132,13 @@ ensures	pointer(&xNetworkAddressing, valNA) &*&
 			else
 			{
 				/// TODO: re-enable, only used in debugging
-				//iptraceARP_TABLE_ENTRY_CREATED( xARPCache[ xOldestEntry ].ulIPAddress, 
-				//	xARPCache[ xOldestEntry ].xMACAddress );
+				//iptraceARP_TABLE_ENTRY_CREATED( xARPCache[ xOldestEntry ].ulIPAddress, xARPCache[ xOldestEntry ].xMACAddress );
 				//xARPCache[ xOldestEntry ].ucAge = ipconfigMAX_ARP_AGE;
 				(xARPCache + xOldestEntry )->ucAge = ipconfigMAX_ARP_AGE;
 			}
-			//@ open_struct(xARPCache);
-			//@ open_struct(xARPCache + 1);
-			//@ open_struct(xARPCache + 2);
-			//@ open_struct(xARPCache + 3);
-			//@ open_struct(xARPCache + 4);
-			//@ open_struct(xARPCache + 5);	
-		}
-		
-	}
 
+		}
+	}
 }
 /*-----------------------------------------------------------*/
 
@@ -2168,6 +1989,7 @@ xEthernetHeader_t *pxEthernetHeader;
 	xNetworkInterfaceOutput( pxNetworkBuffer );
 }
 /*-----------------------------------------------------------*/
+
 static eFrameProcessingResult_t prvProcessARPPacket( xARPPacket_t * pxARPFrame ) //(*EX\label{code:prvProcessARPPacket}EX*)
 /*@ requires
 	// needed for prvrefresh
@@ -2178,16 +2000,11 @@ static eFrameProcessingResult_t prvProcessARPPacket( xARPPacket_t * pxARPFrame )
  	malloc_block_uchars(valUDPP,24) &*&
  	uchars(valUDPP, 24, _) &*&
  	chars(valARPC, sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
- 	chars(valARPC + sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
- 	chars(valARPC + 2*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 3*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 4*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
- 	chars(valARPC + 5*sizeof(struct xARP_CACHE_TABLE_ROW), 
- 		sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _) &*&
+ 	chars(valARPC + 2*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + 3*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + 4*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
+ 	chars(valARPC + 5*sizeof(struct xARP_CACHE_TABLE_ROW), sizeof(struct xARP_CACHE_TABLE_ROW), _)&*&
  	
  	// specific to prvProcessARPPacket 
  	xARP_PACKET_p(pxARPFrame) &*&
@@ -2226,11 +2043,8 @@ static eFrameProcessingResult_t prvProcessARPPacket( xARPPacket_t * pxARPFrame )
 	// open_struct(xDefaultPartUDPPacketHeader);
 	// Sanity check the protocol type.  Don't do anything if the local IP
 	// address is zero because that means a DHCP request has not completed.
-	//if( ( pxARPHeader->usProtocolType == ipARP_PROTOCOL_TYPE ) && 
-	//	( *ipLOCAL_IP_ADDRESS_POINTER != 0UL ) )
-	bool left = ( pxARPHeader->usProtocolType == ipARP_PROTOCOL_TYPE );
-	bool right = ( xDefaultPartUDPPacketHeader != 0 );
-	if( left && right)
+	//if( ( pxARPHeader->usProtocolType == ipARP_PROTOCOL_TYPE ) && ( *ipLOCAL_IP_ADDRESS_POINTER != 0UL ) )
+	if( ( pxARPHeader->usProtocolType == ipARP_PROTOCOL_TYPE ) && ( xDefaultPartUDPPacketHeader != 0 ))
 	{
 		if(pxARPHeader->usOperation == ipARP_REQUEST)
 		{
@@ -2243,8 +2057,7 @@ static eFrameProcessingResult_t prvProcessARPPacket( xARPPacket_t * pxARPFrame )
 				// The request is for the address of this node.  Add the
 				// entry into the ARP cache, or refresh the entry if it
 				// already exists.
-				prvRefreshARPCacheEntry( &( pxARPHeader->xSenderHardwareAddress ), 
-					pxARPHeader->ulSenderProtocolAddress );
+				prvRefreshARPCacheEntry( &( pxARPHeader->xSenderHardwareAddress ), pxARPHeader->ulSenderProtocolAddress );
 
 				// Generate a reply payload in the same buffer.
 				pxARPHeader->usOperation = ipARP_REPLY;
@@ -2252,13 +2065,11 @@ static eFrameProcessingResult_t prvProcessARPPacket( xARPPacket_t * pxARPFrame )
 				//@ open_struct( &pxARPHeader->xTargetHardwareAddress );
 				//@ open_struct( &pxARPHeader->xSenderHardwareAddress );
 				
-				//memcpy( ( void * )  &( pxARPHeader->xTargetHardwareAddress ), 
-				//	( void * ) &( pxARPHeader->xSenderHardwareAddress ), sizeof( xMACAddress_t ) );
+				//memcpy( ( void * )  &( pxARPHeader->xTargetHardwareAddress ), ( void * ) &( pxARPHeader->xSenderHardwareAddress ), sizeof( xMACAddress_t ) );
 				pxARPHeader->ulTargetProtocolAddress = pxARPHeader->ulSenderProtocolAddress;
 				
 				
-				memcpy( ( void * ) &( pxARPHeader->xSenderHardwareAddress ), 
-					( void * ) ipLOCAL_MAC_ADDRESS, sizeof( xMACAddress_t ) );
+				memcpy( ( void * ) &( pxARPHeader->xSenderHardwareAddress ), ( void * ) ipLOCAL_MAC_ADDRESS, sizeof( xMACAddress_t ) );
 				//@ close_struct( &pxARPHeader->xSenderHardwareAddress );
 				//@ close_struct( &pxARPHeader->xTargetHardwareAddress );
 				
@@ -2276,8 +2087,7 @@ static eFrameProcessingResult_t prvProcessARPPacket( xARPPacket_t * pxARPFrame )
 			/// nodig: const xMACAddress_t*  pxMACAddress
 			/// Gegeven: xSenderHardwareAddress
 			
-			prvRefreshARPCacheEntry( &( pxARPHeader->xSenderHardwareAddress ), 
-				pxARPHeader->ulSenderProtocolAddress );
+			prvRefreshARPCacheEntry( &( pxARPHeader->xSenderHardwareAddress ), pxARPHeader->ulSenderProtocolAddress );
 		}
 		/*
 		// replaced with if-statement above
@@ -2293,16 +2103,13 @@ static eFrameProcessingResult_t prvProcessARPPacket( xARPPacket_t * pxARPFrame )
 					// The request is for the address of this node.  Add the
 					// entry into the ARP cache, or refresh the entry if it
 					// already exists.
-					prvRefreshARPCacheEntry( &( pxARPHeader->xSenderHardwareAddress ), 
-						pxARPHeader->ulSenderProtocolAddress );
+					prvRefreshARPCacheEntry( &( pxARPHeader->xSenderHardwareAddress ), pxARPHeader->ulSenderProtocolAddress );
 
 					// Generate a reply payload in the same buffer.
 					pxARPHeader->usOperation = ipARP_REPLY;
-					memcpy( ( void * )  &( pxARPHeader->xTargetHardwareAddress ), 
-						( void * ) &( pxARPHeader->xSenderHardwareAddress ), sizeof( xMACAddress_t ) );
+					memcpy( ( void * )  &( pxARPHeader->xTargetHardwareAddress ), ( void * ) &( pxARPHeader->xSenderHardwareAddress ), sizeof( xMACAddress_t ) );
 					pxARPHeader->ulTargetProtocolAddress = pxARPHeader->ulSenderProtocolAddress;
-					memcpy( ( void * ) &( pxARPHeader->xSenderHardwareAddress ), 
-						( void * ) ipLOCAL_MAC_ADDRESS, sizeof( xMACAddress_t ) );
+					memcpy( ( void * ) &( pxARPHeader->xSenderHardwareAddress ), ( void * ) ipLOCAL_MAC_ADDRESS, sizeof( xMACAddress_t ) );
 					pxARPHeader->ulSenderProtocolAddress = *ipLOCAL_IP_ADDRESS_POINTER;
 
 					eReturn = eReturnEthernetFrame;
@@ -2311,8 +2118,7 @@ static eFrameProcessingResult_t prvProcessARPPacket( xARPPacket_t * pxARPFrame )
 
 			case ipARP_REPLY :
 				iptracePROCESSING_RECEIVED_ARP_REPLY( pxARPHeader->ulTargetProtocolAddress );
-				prvRefreshARPCacheEntry( &( pxARPHeader->xSenderHardwareAddress ), 
-					pxARPHeader->ulSenderProtocolAddress );
+				prvRefreshARPCacheEntry( &( pxARPHeader->xSenderHardwareAddress ), pxARPHeader->ulSenderProtocolAddress );
 				break;
 
 			default :
@@ -2345,46 +2151,53 @@ static eFrameProcessingResult_t prvProcessARPPacket( xARPPacket_t * pxARPFrame )
 #endif /* ipconfigBYTE_ORDER == FREERTOS_LITTLE_ENDIAN */
 
 /*-----------------------------------------------------------*/
-	
-///
+
 void extraSetup() {
-	xARPCache = malloc(6 * sizeof(xARPCacheRow_t));
+	int i;
+	xARPCache = (xARPCacheRow_t *)malloc(6 * sizeof(xARPCacheRow_t));
 	if (xARPCache == 0) abort();
 
-	xNetworkAddressing = malloc(sizeof(xNetworkAddressingParameters_t));
+	xNetworkAddressing = (xNetworkAddressingParameters_t *)malloc(sizeof(xNetworkAddressingParameters_t));
 	if (xNetworkAddressing == 0) abort();
 	xNetworkAddressing->ulDefaultIPAddress = 0;
 	xNetworkAddressing->ulNetMask = 0;
 	xNetworkAddressing->ulGatewayAddress = 0;
 	xNetworkAddressing->ulDNSServerAddress = 0;
 
-	xDefaultPartUDPPacketHeader = malloc(sizeof(uint8_t) * 24);
-	if (xDefaultPartUDPPacketHeader == 0) abort();
-	xDefaultPartUDPPacketHeader[0] = 0x00;
-	xDefaultPartUDPPacketHeader[1] = 0x00;
-	xDefaultPartUDPPacketHeader[2] = 0x00;
-	xDefaultPartUDPPacketHeader[3] = 0x00;
-	xDefaultPartUDPPacketHeader[4] = 0x00;
-	xDefaultPartUDPPacketHeader[5] = 0x00;
-	xDefaultPartUDPPacketHeader[6] = 0x00;
-	xDefaultPartUDPPacketHeader[7] = 0x08;
-	xDefaultPartUDPPacketHeader[8] = ipIP_VERSION_AND_HEADER_LENGTH_BYTE;
-	xDefaultPartUDPPacketHeader[9] = 0x00;
-	xDefaultPartUDPPacketHeader[10] = 0x00;
-	xDefaultPartUDPPacketHeader[11] = 0x00;
-	xDefaultPartUDPPacketHeader[12] = 0x00;
-	xDefaultPartUDPPacketHeader[13] = 0x00;
-	xDefaultPartUDPPacketHeader[14] = 0x00;
-	xDefaultPartUDPPacketHeader[15] = 0x00;
-	xDefaultPartUDPPacketHeader[16] = updconfigIP_TIME_TO_LIVE;
-	xDefaultPartUDPPacketHeader[17] = ipPROTOCOL_UDP;
-	xDefaultPartUDPPacketHeader[18] = 0x00;
-	xDefaultPartUDPPacketHeader[19] = 0x00;
-	xDefaultPartUDPPacketHeader[20] = 0x00;
-	xDefaultPartUDPPacketHeader[21] = 0x00;
-	xDefaultPartUDPPacketHeader[22] = 0x00;
-	xDefaultPartUDPPacketHeader[23] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer = (uint8_t *)malloc(sizeof(uint8_t[24]));
+	if (xDefaultPartUDPPacketHeaderPointer == 0) abort();
+
+	xDefaultPartUDPPacketHeaderPointer[0] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[1] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[2] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[3] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[4] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[5] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[6] = 0x08;
+	xDefaultPartUDPPacketHeaderPointer[7] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[8] = ipIP_VERSION_AND_HEADER_LENGTH_BYTE;
+	xDefaultPartUDPPacketHeaderPointer[9] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[10] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[11] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[12] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[13] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[14] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[15] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[16] = updconfigIP_TIME_TO_LIVE;
+	xDefaultPartUDPPacketHeaderPointer[17] = ipPROTOCOL_UDP;
+	xDefaultPartUDPPacketHeaderPointer[18] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[19] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[20] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[21] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[22] = 0x00;
+	xDefaultPartUDPPacketHeaderPointer[23] = 0x00;
+	
+	for(i = 0; i < 24 ; i++)
+	{
+		if(xDefaultPartUDPPacketHeader[i] != xDefaultPartUDPPacketHeaderPointer[i])
+		{
+			abort;
+		}
+	}
+
 }
-///
-
-
